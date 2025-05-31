@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Carbon\Carbon; // Import Carbon
 
 class GroupController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = Group::query();
 
@@ -17,8 +20,19 @@ class GroupController extends Controller
             $query->where('status', $request->query('status'));
         }
 
-        $groups = $query->get();
-        return response()->json($groups);
+        return Inertia::render('group', [
+            'groups' => $query->get()->map(fn ($group) => [
+                'group_id' => $group->group_id,
+                'name' => $group->name,
+                'description' => $group->description,
+                'max_cycles' => $group->max_cycles,
+                'current_cycle' => $group->current_cycle,
+                'status' => $group->status,
+                // Ensure created_at and updated_at are Carbon instances before calling toDateString()
+                'created_at' => $group->created_at ? Carbon::parse($group->created_at)->toDateString() : null,
+                'status_changed_at' => $group->status_changed_at ? Carbon::parse($group->status_changed_at)->toDateString() : null,
+            ]),
+        ]);
     }
 
     public function store(Request $request)

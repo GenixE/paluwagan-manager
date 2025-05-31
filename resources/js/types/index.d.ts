@@ -41,3 +41,25 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Client {
+    client_id: number;
+    first_name: string;
+    last_name: string;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    // Add other fields as necessary from your Client model
+}
+
+export interface Group {
+    group_id: number;
+    name: string;
+    description?: string | null;
+    max_cycles: number;
+    current_cycle: number;
+    status: 'pending' | 'active' | 'completed' | 'terminated';
+    created_at: string;
+    status_changed_at: string;
+    // Add other fields as necessary from your Group model
+}
