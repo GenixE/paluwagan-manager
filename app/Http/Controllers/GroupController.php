@@ -14,7 +14,7 @@ class GroupController extends Controller
 {
     public function index(Request $request): InertiaResponse
     {
-        $query = Group::query();
+        $query = Group::query()->withCount('members'); // Use withCount for member counting
 
         if ($request->has('status')) {
             $query->where('status', $request->query('status'));
@@ -25,12 +25,11 @@ class GroupController extends Controller
                 'group_id' => $group->group_id,
                 'name' => $group->name,
                 'description' => $group->description,
-                'max_cycles' => $group->max_cycles,
-                'current_cycle' => $group->current_cycle,
+                'current_cycle' => $group->current_cycle, // Included as it's in your TS type
                 'status' => $group->status,
-                // Ensure created_at and updated_at are Carbon instances before calling toDateString()
                 'created_at' => $group->created_at ? Carbon::parse($group->created_at)->toDateString() : null,
                 'status_changed_at' => $group->status_changed_at ? Carbon::parse($group->status_changed_at)->toDateString() : null,
+                'members_count' => $group->members_count, // This is now available due to withCount
             ]),
         ]);
     }
@@ -40,7 +39,6 @@ class GroupController extends Controller
         $data = $request->validate([
             'name'        => 'required|string|max:150',
             'description' => 'nullable|string',
-            'max_cycles'  => 'required|integer|min:1',
         ]);
 
         $group = Group::create($data);
@@ -59,7 +57,6 @@ class GroupController extends Controller
         $data = $request->validate([
             'name'        => 'sometimes|required|string|max:150',
             'description' => 'nullable|string',
-            'max_cycles'  => 'sometimes|required|integer|min:1',
         ]);
         $group->update($data);
         return response()->json($group);

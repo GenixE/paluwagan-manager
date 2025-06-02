@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Group;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,9 @@ class GroupTerminationFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'group_id' => Group::factory(),
+            'reason' => $this->faker->optional()->sentence,
+            'terminated_at' => $this->faker->dateTimeThisYear(),
         ];
     }
 }

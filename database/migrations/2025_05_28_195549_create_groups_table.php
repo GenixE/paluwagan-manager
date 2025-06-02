@@ -17,13 +17,9 @@ return new class extends Migration
             $table->string('name', 150);
             $table->text('description')->nullable();
             $table->dateTime('created_at')->useCurrent();
-            $table->unsignedInteger('max_cycles');
             $table->enum('status', ['active','finished','terminated'])->default('active');
             $table->dateTime('status_changed_at')->nullable();
         });
-
-        // enforce max_cycles > 0
-        DB::statement('ALTER TABLE `groups` ADD CONSTRAINT chk_max_cycles CHECK (max_cycles > 0)');
     }
 
     /**

@@ -67,7 +67,7 @@ export const columns: ColumnDef<Group>[] = [
     },
     {
         accessorKey: 'name',
-        header: 'Name', // Sorting removed
+        header: 'Name',
         cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
     },
     {
@@ -77,7 +77,7 @@ export const columns: ColumnDef<Group>[] = [
     },
     {
         accessorKey: 'status',
-        header: ({ column }) => { // Sorting added
+        header: ({ column }) => {
             return (
                 <Button
                     variant="ghost"
@@ -90,14 +90,17 @@ export const columns: ColumnDef<Group>[] = [
         },
         cell: ({ row }) => <div className="capitalize">{row.getValue('status')}</div>,
     },
-    {
-        accessorKey: 'max_cycles',
-        header: 'Max Cycles',
-        cell: ({ row }) => <div>{row.getValue('max_cycles')}</div>,
+    { // New column for members count
+        accessorKey: 'members_count',
+        header: 'Members',
+        cell: ({ row }) => {
+            const count = row.getValue('members_count') as number;
+            return <div>{`${count}/16`}</div>; // Assuming 16 is the max
+        },
     },
     {
         accessorKey: 'created_at',
-        header: ({ column }) => { // Sorting added
+        header: ({ column }) => {
             return (
                 <Button
                     variant="ghost"
@@ -111,8 +114,8 @@ export const columns: ColumnDef<Group>[] = [
         cell: ({ row }) => <div>{row.getValue('created_at')}</div>,
     },
     {
-        accessorKey: 'status_changed_at', // This corresponds to 'Updated At'
-        header: ({ column }) => { // Sorting added
+        accessorKey: 'status_changed_at',
+        header: ({ column }) => {
             return (
                 <Button
                     variant="ghost"
@@ -148,24 +151,6 @@ export const columns: ColumnDef<Group>[] = [
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {/* TODO: Implement View/Edit/Terminate actions */}
-                            {/* <DropdownMenuItem>
-                                <Link href={route('groups.show', group.group_id)}>View group</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Link href={route('groups.edit', group.group_id)}>Edit group</Link>
-                            </DropdownMenuItem>
-                             <DropdownMenuItem
-                                onClick={() => router.post(route('groups.terminate', group.group_id), {}, { preserveScroll: true })}
-                                className="text-orange-600" // Example for terminate
-                            >
-                                Terminate group
-                            </DropdownMenuItem>
-                             <DropdownMenuItem
-                                onClick={() => router.delete(route('groups.destroy', group.group_id), { preserveScroll: true })} // Assuming you add a destroy route
-                                className="text-red-600"
-                            >
-                                Delete group
-                            </DropdownMenuItem> */}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -193,7 +178,7 @@ export default function GroupPage({ groups }: GroupPageProps) {
         },
         initialState: {
             pagination: {
-                pageSize: 15, // Set desired page size
+                pageSize: 15,
             },
         },
     });
@@ -204,7 +189,6 @@ export default function GroupPage({ groups }: GroupPageProps) {
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold">Groups List</h1>
-                    {/* TODO: Implement Create Group functionality */}
                     {/* <Button asChild>
                         <Link href={route('groups.create')}>
                             <PlusCircle className="mr-2 size-4" />

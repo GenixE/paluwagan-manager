@@ -24,7 +24,6 @@ class GroupFactory extends Factory
         return [
             'name' => $this->faker->sentence(3),
             'description' => $this->faker->optional()->paragraph,
-            'max_cycles' => $max,
             'status' => 'active',
             'status_changed_at' => null,
             'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
