@@ -11,7 +11,7 @@ use App\Models\Cycle;
 use App\Models\GroupMember;
 use App\Models\Contribution;
 use App\Models\Payout;
-use App\Models\GroupTermination;
+// Removed: use App\Models\GroupTermination;
 
 class DatabaseSeeder extends Seeder
 {
@@ -68,24 +68,15 @@ class DatabaseSeeder extends Seeder
                         ->create();
                 }
 
-                // Optionally terminate or finish some groups
-                if (rand(1, 10) > 7) {
-                    // Manually terminate a few groups
-                    GroupTermination::factory()
-                        ->for($group)
-                        ->create();
-
-                    $group->update([
-                        'status' => 'terminated',
-                        'status_changed_at' => now(),
-                    ]);
-                } else {
-                    // Simulate finishing: mark as finished if all payouts completed
+                // Optionally mark some groups as 'finished'.
+                // Groups are 'active' by default (from the factory) or if not marked 'finished' here.
+                if (rand(0, 1)) { // 50% chance to be marked as 'finished'
                     $group->update([
                         'status' => 'finished',
                         'status_changed_at' => now(),
                     ]);
                 }
+                // If not updated to 'finished', the group remains in its default 'active' state.
             });
     }
 }

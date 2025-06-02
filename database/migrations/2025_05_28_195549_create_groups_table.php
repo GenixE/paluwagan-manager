@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name', 150);
             $table->text('description')->nullable();
             $table->dateTime('created_at')->useCurrent();
-            $table->enum('status', ['active','finished','terminated'])->default('active');
+            $table->enum('status', ['active','finished'])->default('active');
             $table->dateTime('status_changed_at')->nullable();
         });
     }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     ColumnDef,
     flexRender,
@@ -14,6 +14,13 @@ import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -23,49 +30,32 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Payout, BreadcrumbItem } from '@/types';
+import { BreadcrumbItem, Contribution } from '@/types'; // Ensure Contribution is imported
 
-interface PayoutPageProps {
-    payouts: Payout[];
+interface ContributionPageProps {
+    contributions: Contribution[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: route('dashboard') },
-    { title: 'Payouts', href: route('payouts.index') },
+    { title: 'Contributions', href: route('contributions.index') },
 ];
 
-export const columns: ColumnDef<Payout>[] = [
+export const columns: ColumnDef<Contribution>[] = [
     {
-        accessorKey: 'member.client.first_name',
-        header: 'Client Name',
+        accessorKey: 'member',
+        header: 'Member',
         cell: ({ row }) => {
-            const payout = row.original;
-            const firstName = payout.member?.client?.first_name || 'N/A';
-            const lastName = payout.member?.client?.last_name || '';
-            return <div className="font-medium">{`${firstName} ${lastName}`.trim()}</div>;
+            const member = row.original.member;
+            return <div>{member.client ? `${member.client.first_name} ${member.client.last_name}` : 'N/A'}</div>;
         },
     },
     {
-        accessorKey: 'cycle.group.name',
-        header: 'Group',
+        accessorKey: 'cycle',
+        header: 'Group & Cycle',
         cell: ({ row }) => {
-            const groupName = row.original.cycle?.group?.name || 'N/A';
-            return <div>{groupName}</div>;
-        },
-    },
-    {
-        accessorKey: 'cycle.cycle_number',
-        header: 'Cycle',
-        cell: ({ row }) => {
-            const cycleNumber = row.original.cycle?.cycle_number;
-            return <div>{`Cycle ${cycleNumber ?? 'N/A'}`}</div>;
+            const cycle = row.original.cycle;
+            return <div>{cycle.group ? cycle.group.name : 'N/A'} - Cycle {cycle.cycle_number}</div>;
         },
     },
     {
@@ -81,9 +71,9 @@ export const columns: ColumnDef<Payout>[] = [
         ),
         cell: ({ row }) => {
             const amount = parseFloat(row.getValue('amount'));
-            const formatted = new Intl.NumberFormat('es-ES', {
+            const formatted = new Intl.NumberFormat('en-US', {
                 style: 'currency',
-                currency: 'EUR',
+                currency: 'USD', // Adjust currency as needed
             }).format(amount);
             return <div className="font-medium">{formatted}</div>;
         },
@@ -121,7 +111,7 @@ export const columns: ColumnDef<Payout>[] = [
         id: 'actions',
         header: () => <div className="text-right">Actions</div>,
         cell: ({ row }) => {
-            const payout = row.original;
+            const contribution = row.original;
             return (
                 <div className="text-right font-medium">
                     <DropdownMenu>
@@ -134,10 +124,11 @@ export const columns: ColumnDef<Payout>[] = [
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem
-                                onClick={() => navigator.clipboard.writeText(payout.payout_id.toString())}
+                                onClick={() => navigator.clipboard.writeText(contribution.contribution_id.toString())}
                             >
-                                Copy Payout ID
+                                Copy Contribution ID
                             </DropdownMenuItem>
+                            {/* Add other actions if needed */}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -146,12 +137,12 @@ export const columns: ColumnDef<Payout>[] = [
     },
 ];
 
-export default function PayoutPage({ payouts }: PayoutPageProps) {
+export default function ContributionPage({ contributions }: ContributionPageProps) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = React.useState('');
 
     const table = useReactTable({
-        data: payouts,
+        data: contributions,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -167,20 +158,26 @@ export default function PayoutPage({ payouts }: PayoutPageProps) {
             pagination: {
                 pageSize: 15,
             },
+            sorting: [ // Default sort by paid_at descending
+                {
+                    id: 'paid_at',
+                    desc: true,
+                },
+            ],
         },
     });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Payouts" />
+            <Head title="Contributions" />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Payouts List</h1>
+                    <h1 className="text-2xl font-semibold">Contributions List</h1>
                 </div>
 
                 <div className="flex items-center py-4">
                     <Input
-                        placeholder="Filter payouts..."
+                        placeholder="Filter contributions..."
                         value={globalFilter ?? ''}
                         onChange={(event) =>
                             setGlobalFilter(event.target.value)
@@ -189,7 +186,7 @@ export default function PayoutPage({ payouts }: PayoutPageProps) {
                     />
                 </div>
 
-                {payouts.length > 0 ? (
+                {contributions.length > 0 ? (
                     <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <Table>
                             <TableHeader>
@@ -241,14 +238,14 @@ export default function PayoutPage({ payouts }: PayoutPageProps) {
                 ) : (
                     <div className="border-sidebar-border/70 dark:border-sidebar-border relative flex min-h-[200px] flex-1 items-center justify-center rounded-xl border p-4">
                         <div className="text-center">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">No payouts found</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">No contributions found</h3>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                There are currently no payouts to display.
+                                There are currently no contributions to display.
                             </p>
                         </div>
                     </div>
                 )}
-                {payouts.length > 0 && (
+                {contributions.length > 0 && (
                     <div className="flex items-center justify-end space-x-2 py-4">
                         <Button
                             variant="outline"
