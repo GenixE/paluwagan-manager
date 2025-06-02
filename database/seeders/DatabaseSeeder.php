@@ -23,8 +23,9 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'admin',
+            'email' => 'admin@paluwagan.com',
+            'password' => bcrypt('admin123'), // password
         ]);
 
         // Create some clients
@@ -43,13 +44,12 @@ class DatabaseSeeder extends Seeder
 
                 // Define cycles equal to max_cycles
                 $cycles = [];
-                for ($i = 1; $i <= $group->max_cycles; $i++) {
+                for ($i = 1; $i <= $members->count(); $i++) {
                     $cycles[] = Cycle::factory()
                         ->for($group)
                         ->state(['cycle_number' => $i])
                         ->create();
                 }
-
                 // Seed contributions and payouts for each cycle
                 foreach ($cycles as $cycle) {
                     // Create a contribution for every member in this cycle
