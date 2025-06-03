@@ -35,6 +35,13 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     ColumnDef,
     flexRender,
     getCoreRowModel,
@@ -88,6 +95,7 @@ export default function GroupPage({ groups }: GroupPageProps) {
     } = useForm({
         name: '',
         description: '',
+        status: 'active', // Added status with default
     });
 
     const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -103,6 +111,7 @@ export default function GroupPage({ groups }: GroupPageProps) {
     } = useForm({
         name: '',
         description: '',
+        status: 'active', // Added status
     });
 
     const handleCreateSubmit: FormEventHandler<HTMLFormElement> = (e) => {
@@ -131,10 +140,11 @@ export default function GroupPage({ groups }: GroupPageProps) {
 
     const openEditDialog = (group: Group) => {
         setEditingGroupId(group.group_id);
-        resetEditForm();
+        resetEditForm(); // Reset before setting new data to clear previous errors
         setEditData({
             name: group.name || '',
             description: group.description || '',
+            status: group.status || 'active', // Set status from group data
         });
         setEditDialogOpen(true);
     };
@@ -360,6 +370,21 @@ export default function GroupPage({ groups }: GroupPageProps) {
                                     <Textarea id="create_group_description" value={createData.description} onChange={(e) => setCreateData('description', e.target.value)} placeholder="Optional: Describe the group's purpose" className="min-h-[100px]" />
                                     {createErrors.description && <p className="mt-1 text-sm text-red-500">{createErrors.description}</p>}
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="create_group_status">Status</Label>
+                                    <Select value={createData.status} onValueChange={(value) => setCreateData('status', value)}>
+                                        <SelectTrigger id="create_group_status">
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="active">Active</SelectItem>
+                                            <SelectItem value="finished">Finished</SelectItem>
+                                            {/* Add other statuses if needed, e.g., pending */}
+                                            {/* <SelectItem value="pending">Pending</SelectItem> */}
+                                        </SelectContent>
+                                    </Select>
+                                    {createErrors.status && <p className="mt-1 text-sm text-red-500">{createErrors.status}</p>}
+                                </div>
                                 <DialogFooter>
                                     <DialogClose asChild>
                                         <Button type="button" variant="outline">Cancel</Button>
@@ -397,6 +422,21 @@ export default function GroupPage({ groups }: GroupPageProps) {
                                 <Label htmlFor="edit_group_description">Description</Label>
                                 <Textarea id="edit_group_description" value={editData.description} onChange={(e) => setEditData('description', e.target.value)} placeholder="Optional: Describe the group's purpose" className="min-h-[100px]" />
                                 {editErrors.description && <p className="mt-1 text-sm text-red-500">{editErrors.description}</p>}
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit_group_status">Status</Label>
+                                <Select value={editData.status} onValueChange={(value) => setEditData('status', value)}>
+                                    <SelectTrigger id="edit_group_status">
+                                        <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="finished">Finished</SelectItem>
+                                        {/* Add other statuses if needed, e.g., pending */}
+                                        {/* <SelectItem value="pending">Pending</SelectItem> */}
+                                    </SelectContent>
+                                </Select>
+                                {editErrors.status && <p className="mt-1 text-sm text-red-500">{editErrors.status}</p>}
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>

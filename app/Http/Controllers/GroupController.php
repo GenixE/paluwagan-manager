@@ -40,6 +40,7 @@ class GroupController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
+            'status' => 'required|in:active,finished',
         ]);
 
         Group::create($data);
@@ -96,6 +97,7 @@ class GroupController extends Controller
                         'member_name' => $contribution->member && $contribution->member->client ? $contribution->member->client->first_name . ' ' . $contribution->member->client->last_name : 'N/A',
                         'amount' => $contribution->amount,
                         'status' => $contribution->status,
+                        'notes' => $contribution->notes, // Added notes attribute
                         'contribution_date' => $contribution->paid_at ? Carbon::parse($contribution->paid_at)->toDateString() : ($contribution->created_at ? Carbon::parse($contribution->created_at)->toDateString() : null),
                     ];
                 });
