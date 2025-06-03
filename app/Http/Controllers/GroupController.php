@@ -85,6 +85,7 @@ class GroupController extends Controller
                     ],
                     'pivot' => [
                         'joined_at' => $member->joined_at ? Carbon::parse($member->joined_at)->toDateTimeString() : null,
+                        'position' => $member->position, // Added position attribute
                     ]
                 ];
             }),

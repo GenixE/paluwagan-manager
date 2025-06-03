@@ -20,7 +20,7 @@ interface EnrichedCycle extends Cycle { // Cycle already has start_date, end_dat
 }
 
 interface EnrichedGroup extends Group {
-    members: Array<{ client: Client; pivot?: { joined_at: string } }>;
+    members: Array<{ client: Client; pivot?: { joined_at: string; position: number; } }>; // Added position to pivot
     cycles: Array<EnrichedCycle>;
 }
 
@@ -72,6 +72,7 @@ export default function GroupDetailsPage({group}: GroupDetailsPageProps) {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead>Position (Payout Date)</TableHead> {/* New Header */}
                                         <TableHead>Name</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Phone number</TableHead>
@@ -79,14 +80,30 @@ export default function GroupDetailsPage({group}: GroupDetailsPageProps) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {group.members.map((member) => (
-                                        <TableRow key={member.client.client_id}>
-                                            <TableCell>{member.client.first_name} {member.client.last_name}</TableCell>
-                                            <TableCell>{member.client.email || 'N/A'}</TableCell>
-                                            <TableCell>{member.client.phone || 'N/A'}</TableCell>
-                                            <TableCell>{member.pivot?.joined_at ? new Date(member.pivot.joined_at).toLocaleDateString() : 'N/A'}</TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {group.members.map((member) => {
+                                        const memberPosition = member.pivot?.position;
+                                        let payoutDateDisplay = 'N/A';
+
+                                        if (memberPosition !== undefined && group.cycles) {
+                                            const relevantCycle = group.cycles.find(
+                                                (cycle) => cycle.cycle_number === memberPosition
+                                            );
+                                            if (relevantCycle?.start_date) {
+                                                payoutDateDisplay = new Date(relevantCycle.start_date)
+                                                    .toLocaleString('default', {month: 'long', year: 'numeric'});
+                                            }
+                                        }
+
+                                        return (
+                                            <TableRow key={member.client.client_id}>
+                                                <TableCell>{payoutDateDisplay}</TableCell> {/* New Cell */}
+                                                <TableCell>{member.client.first_name} {member.client.last_name}</TableCell>
+                                                <TableCell>{member.client.email || 'N/A'}</TableCell>
+                                                <TableCell>{member.client.phone || 'N/A'}</TableCell>
+                                                <TableCell>{member.pivot?.joined_at ? new Date(member.pivot.joined_at).toLocaleDateString() : 'N/A'}</TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         ) : (

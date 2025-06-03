@@ -12,7 +12,7 @@ class GroupMember extends Model
     protected $table = 'group_members';
     protected $primaryKey = 'member_id';
     public $timestamps = false;
-    protected $fillable = ['group_id', 'client_id'];
+    protected $fillable = ['group_id', 'client_id', 'position'];
     protected $dates = ['joined_at'];
 
     use HasFactory;

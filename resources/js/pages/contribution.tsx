@@ -71,9 +71,9 @@ export const columns: ColumnDef<Contribution>[] = [
         ),
         cell: ({ row }) => {
             const amount = parseFloat(row.getValue('amount'));
-            const formatted = new Intl.NumberFormat('en-US', {
+            const formatted = new Intl.NumberFormat('es-ES', {
                 style: 'currency',
-                currency: 'USD', // Adjust currency as needed
+                currency: 'EUR', // Adjust currency as needed
             }).format(amount);
             return <div className="font-medium">{formatted}</div>;
         },

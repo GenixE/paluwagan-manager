@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Group; // Import the Group model
+use App\Models\Group;
+
+// Import the Group model
 use App\Models\GroupMember;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Validation\ValidationException; // Import ValidationException
+use Illuminate\Validation\ValidationException;
+
+// Import ValidationException
 
 class GroupMemberController extends Controller
 {
@@ -27,7 +31,10 @@ class GroupMemberController extends Controller
             ]);
         }
 
-        $data = $request->validate(['client_id' => 'required|exists:clients,client_id']);
+        $data = $request->validate(
+            ['client_id' => 'required|exists:clients,client_id',
+                'position' => 'required|integer|min:1']
+        );
         $data['group_id'] = $groupId;
 
         // Ensure a client is not added twice to the same group (database unique constraint should also handle this)
