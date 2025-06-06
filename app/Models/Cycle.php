@@ -9,13 +9,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cycle extends Model
 {
+    use HasFactory;
+
     protected $table = 'cycles';
     protected $primaryKey = 'cycle_id';
-    public $timestamps = false;
-    protected $fillable = ['group_id', 'cycle_number', 'due_date', 'payout_date'];
-    protected $dates = ['due_date', 'payout_date'];
+    public $timestamps = false; // Assuming no created_at/updated_at for cycles themselves
 
-    use HasFactory;
+    protected $fillable = [
+        'group_id',
+        'cycle_number',
+        'start_date',
+        'end_date', // Corrected from due_date
+        'status'    // Added
+    ];
+
+    // The $dates property is deprecated in newer Laravel versions in favor of $casts.
+    // If you are on Laravel 9+ $casts is preferred.
+    // For older versions, $dates would be: protected $dates = ['start_date', 'end_date'];
+
+    protected $casts = [
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+        // 'status' can be left as string or cast to a custom Enum if you create one.
+    ];
 
     public function group(): BelongsTo
     {

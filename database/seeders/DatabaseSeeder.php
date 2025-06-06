@@ -11,7 +11,7 @@ use App\Models\Cycle;
 use App\Models\GroupMember;
 use App\Models\Contribution;
 use App\Models\Payout;
-use App\Models\GroupTermination;
+// Removed: use App\Models\GroupTermination;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,27 +23,47 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'admin',
+            'email' => 'admin@paluwagan.com',
+            'password' => bcrypt('admin123'), // password
         ]);
 
         // Create some clients
-        Client::factory()->count(30)->create();
+        $clients = Client::factory()->count(30)->create();
 
         // Create several groups with related data
         Group::factory()
             ->count(5)
             ->create()
-            ->each(function (Group $group) {
-                // Add random members (between 4 and 8)
-                $members = GroupMember::factory()
-                    ->count(rand(4, 8))
-                    ->for($group)
-                    ->create();
+            ->each(function (Group $group) use ($clients) {
+                $memberCount = rand(4, 8);
+                $members = collect();
 
-                // Define cycles equal to max_cycles
+                // Create members with positions 1 through memberCount
+                for ($position = 1; $position <= $memberCount; $position++) {
+                    // For demonstration, allow some clients to have multiple positions
+                    // 70% chance to use a new client, 30% chance to reuse an existing client
+                    if ($position <= 3 || rand(1, 10) <= 7) {
+                        $client = $clients->random();
+                    } else {
+                        // Reuse a client that's already in this group (different position)
+                        $existingMember = $members->random();
+                        $client = $existingMember->client;
+                    }
+
+                    $member = GroupMember::create([
+                        'group_id' => $group->group_id,
+                        'client_id' => $client->client_id,
+                        'position' => $position,
+                        'joined_at' => now(),
+                    ]);
+
+                    $members->push($member);
+                }
+
+                // Define cycles equal to member count (each position gets a cycle)
                 $cycles = [];
-                for ($i = 1; $i <= $group->max_cycles; $i++) {
+                for ($i = 1; $i <= $memberCount; $i++) {
                     $cycles[] = Cycle::factory()
                         ->for($group)
                         ->state(['cycle_number' => $i])
@@ -60,32 +80,25 @@ class DatabaseSeeder extends Seeder
                             ->create();
                     }
 
-                    // Randomly pick one member as payout recipient
-                    $winner = $members->random();
-                    Payout::factory()
-                        ->for($cycle)
-                        ->for($winner, 'member') // Assuming Payout model also has a 'member' relationship to GroupMember
-                        ->create();
+                    // The member with position matching the cycle number gets the payout
+                    $winner = $members->where('position', $cycle->cycle_number)->first();
+                    if ($winner) {
+                        Payout::factory()
+                            ->for($cycle)
+                            ->for($winner, 'member') // Assuming Payout model also has a 'member' relationship to GroupMember
+                            ->create();
+                    }
                 }
 
-                // Optionally terminate or finish some groups
-                if (rand(1, 10) > 7) {
-                    // Manually terminate a few groups
-                    GroupTermination::factory()
-                        ->for($group)
-                        ->create();
-
-                    $group->update([
-                        'status' => 'terminated',
-                        'status_changed_at' => now(),
-                    ]);
-                } else {
-                    // Simulate finishing: mark as finished if all payouts completed
+                // Optionally mark some groups as 'finished'.
+                // Groups are 'active' by default (from the factory) or if not marked 'finished' here.
+                if (rand(0, 1)) { // 50% chance to be marked as 'finished'
                     $group->update([
                         'status' => 'finished',
                         'status_changed_at' => now(),
                     ]);
                 }
+                // If not updated to 'finished', the group remains in its default 'active' state.
             });
     }
 }

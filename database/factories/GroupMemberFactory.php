@@ -25,6 +25,7 @@ class GroupMemberFactory extends Factory
         return [
             'group_id' => Group::factory(),
             'client_id' => Client::factory(),
+            'position' => $this->faker->numberBetween(1, 16), // Assuming max 16 positions
             'joined_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
     }

@@ -15,9 +15,11 @@ return new class extends Migration
             $table->increments('member_id');
             $table->unsignedInteger('group_id');
             $table->unsignedInteger('client_id');
+            $table->unsignedInteger('position'); // Added position column
             $table->dateTime('joined_at')->useCurrent();
 
-            $table->unique(['group_id', 'client_id']);
+            // Updated unique constraint to include position
+            $table->unique(['group_id', 'client_id', 'position']);
             $table->foreign('group_id')->references('group_id')->on('groups')->onDelete('cascade');
             $table->foreign('client_id')->references('client_id')->on('clients')->onDelete('cascade');
         });
