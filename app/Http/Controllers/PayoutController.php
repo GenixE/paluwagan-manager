@@ -6,46 +6,52 @@ use App\Models\Cycle;
 use App\Models\Group;
 use App\Models\Payout;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse; // Import RedirectResponse
 use Inertia\Inertia;
-use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Validator;
+use Inertia\Response as InertiaResponse; // Import InertiaResponse for type hinting
+use Illuminate\Support\Facades\Validator; // Keep for direct use if preferred, or remove if fully switching to $request->validate()
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException; // Import ValidationException
 
 class PayoutController extends Controller
 {
-    public function index()
+    public function index(): InertiaResponse
     {
         $payouts = Payout::with(['member.client', 'cycle.group'])
-            ->orderByRaw('ISNULL(paid_at) ASC, paid_at DESC, created_at DESC')
+            ->orderByRaw('ISNULL(paid_at) ASC, paid_at DESC')
             ->get();
 
-        return Inertia::render('payout', [
+        return Inertia::render('payout', [ // Assuming a view like 'Payouts/Index'
             'payouts' => $payouts,
         ]);
     }
 
     // Method to fetch payouts for a specific cycle
-    public function indexForCycle(Group $group, Cycle $cycle): JsonResponse
+    public function indexForCycle(Group $group, Cycle $cycle): InertiaResponse | RedirectResponse
     {
         // Ensure the cycle belongs to the group
         if ($cycle->group_id !== $group->group_id) {
-            return response()->json(['message' => 'Cycle not found in this group.'], Response::HTTP_NOT_FOUND);
+            return redirect()->back()->withErrors(['message' => 'Cycle not found in this group.']);
         }
         $payouts = Payout::with('member.client')
             ->where('cycle_id', $cycle->cycle_id)
-            ->orderByRaw('ISNULL(paid_at) ASC, paid_at DESC, created_at DESC')
+            ->orderByRaw('ISNULL(paid_at) ASC, paid_at DESC')
             ->get();
-        return response()->json($payouts);
+
+        return Inertia::render('Payouts/IndexForCycle', [ // Assuming a view like 'Payouts/IndexForCycle'
+            'group' => $group,
+            'cycle' => $cycle,
+            'payouts' => $payouts,
+        ]);
     }
 
-    public function store(Request $request, Group $group, Cycle $cycle): JsonResponse
+    public function store(Request $request, Group $group, Cycle $cycle): RedirectResponse
     {
         if ($cycle->group_id !== $group->group_id) {
-            return response()->json(['message' => 'Cycle not found in this group.'], Response::HTTP_FORBIDDEN);
+            return redirect()->back()->withErrors(['message' => 'Cycle not found in this group.']);
         }
 
-        $validator = Validator::make($request->all(), [
+        $validatedData = $request->validate([
             'member_id' => [
                 'required',
                 Rule::exists('group_members', 'member_id')->where(function ($query) use ($group) {
@@ -56,76 +62,53 @@ class PayoutController extends Controller
             'status' => 'required|in:scheduled,completed,failed',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $validatedData = $validator->validated();
-
-        $payout = $cycle->payouts()->create([
+        $cycle->payouts()->create([
             'member_id' => $validatedData['member_id'],
             'amount' => $validatedData['amount'],
             'status' => $validatedData['status'],
             'paid_at' => ($validatedData['status'] === 'completed') ? now() : null,
         ]);
 
-        return response()->json($payout->load('member.client'), Response::HTTP_CREATED);
+        return redirect()->back()->with('success', 'Payout created successfully.');
     }
 
-    public function update(Request $request, Group $group, Cycle $cycle, Payout $payout): JsonResponse
+    public function update(Request $request, Group $group, Cycle $cycle, Payout $payout): RedirectResponse
     {
         if ($cycle->group_id !== $group->group_id || $payout->cycle_id !== $cycle->cycle_id) {
-            return response()->json(['message' => 'Resource not found or access denied.'], Response::HTTP_FORBIDDEN);
+            return redirect()->back()->withErrors(['message' => 'Resource not found or access denied.']);
         }
 
-        $validator = Validator::make($request->all(), [
+        $validatedData = $request->validate([
             'amount' => 'sometimes|required|numeric|min:0',
             'status' => 'sometimes|required|in:scheduled,completed,failed',
-            // member_id is typically not updatable for a payout, but if it were:
-            // 'member_id' => [
-            //     'sometimes',
-            //     'required',
-            //     Rule::exists('group_members', 'member_id')->where(function ($query) use ($group) {
-            //         return $query->where('group_id', $group->group_id);
-            //     }),
-            // ],
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $validatedData = $validator->validated();
 
         // Handle paid_at logic based on status change
         if (isset($validatedData['status'])) {
             if ($validatedData['status'] === 'completed' && $payout->status !== 'completed') {
                 $validatedData['paid_at'] = now();
             } elseif ($validatedData['status'] !== 'completed' && $payout->status === 'completed') {
-                // If changing from completed to something else, nullify paid_at
                 $validatedData['paid_at'] = null;
             } else if ($validatedData['status'] === 'completed') {
-                // If status is 'completed' and was already 'completed', keep existing paid_at or set to now() if null
                 $validatedData['paid_at'] = $payout->paid_at ?? now();
             } else {
-                // If new status is not 'completed', ensure paid_at is null
                 $validatedData['paid_at'] = null;
             }
         }
 
         $payout->update($validatedData);
 
-        return response()->json($payout->load('member.client'));
+        return redirect()->back()->with('success', 'Payout updated successfully.');
     }
 
-    public function destroy(Group $group, Cycle $cycle, Payout $payout): JsonResponse
+    public function destroy(Group $group, Cycle $cycle, Payout $payout): RedirectResponse
     {
         if ($cycle->group_id !== $group->group_id || $payout->cycle_id !== $cycle->cycle_id) {
-            return response()->json(['message' => 'Resource not found or access denied.'], Response::HTTP_FORBIDDEN);
+            return redirect()->back()->withErrors(['message' => 'Resource not found or access denied.']);
         }
 
         $payout->delete();
 
-        return response()->json(null, Response::HTTP_NO_CONTENT);
+        return redirect()->back()->with('success', 'Payout removed successfully.');
     }
 }

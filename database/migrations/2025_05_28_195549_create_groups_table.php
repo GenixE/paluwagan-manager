@@ -16,6 +16,7 @@ return new class extends Migration
             $table->increments('group_id');
             $table->string('name', 150);
             $table->text('description')->nullable();
+            $table->integer('current_cycle')->nullable(); // Added this line
             $table->dateTime('created_at')->useCurrent();
             $table->enum('status', ['active','finished'])->default('active');
             $table->dateTime('status_changed_at')->nullable();
@@ -27,6 +28,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('groups');
+        Schema::table('groups', function (Blueprint $table) {
+            if (Schema::hasColumn('groups', 'current_cycle')) { // Check if column exists before dropping
+                $table->dropColumn('current_cycle');
+            }
+        });
+        Schema::dropIfExists('groups'); // This line should remain to drop the table itself
     }
 };

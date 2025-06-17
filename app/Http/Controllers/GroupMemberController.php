@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group;
-
 // Import the Group model
 use App\Models\GroupMember;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse; // Add this
+use Inertia\Inertia; // Import Inertia
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Http\RedirectResponse; // Add this
-
 // Import ValidationException
 
 class GroupMemberController extends Controller
@@ -45,7 +44,7 @@ class GroupMemberController extends Controller
 
         return redirect()->back()->with('success', 'Member position updated successfully.');
     }
-    public function store(Request $request, $groupId)
+    public function store(Request $request, $groupId): RedirectResponse
     {
         $group = Group::withCount('members')->findOrFail($groupId); // Fetch group and count members
 
@@ -73,14 +72,14 @@ class GroupMemberController extends Controller
             ]);
         }
 
-        $member = GroupMember::create($data);
-        return response()->json($member, Response::HTTP_CREATED);
+        GroupMember::create($data);
+        return redirect()->back()->with('success', 'Member added successfully.');
     }
 
-    public function destroy($groupId, $id)
+    public function destroy($groupId, $id): RedirectResponse
     {
         $member = GroupMember::where('group_id', $groupId)->findOrFail($id);
         $member->delete();
-        return response()->json(null, Response::HTTP_NO_CONTENT);
+        return redirect()->back()->with('success', 'Member removed successfully.');
     }
 }

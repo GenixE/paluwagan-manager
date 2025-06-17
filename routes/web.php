@@ -3,6 +3,7 @@
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ContributionController;
 use App\Http\Controllers\CycleController;
+use App\Http\Controllers\DashboardController; // Add this line
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\GroupMemberController;
 use App\Http\Controllers\PayoutController;
@@ -14,10 +15,12 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    // Change this line:
+    // Route::get('dashboard', function () { return Inertia::render('dashboard'); })->name('dashboard');
+    // To this:
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // ... rest of your routes
     // Client CRUD
     Route::prefix('clients')->name('clients.')->group(function () {
         Route::get('/', [ClientController::class, 'index'])->name('index');
