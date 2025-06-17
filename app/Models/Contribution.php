@@ -14,6 +14,11 @@ class Contribution extends Model
     protected $fillable = ['cycle_id', 'member_id', 'amount', 'status', 'paid_at', 'notes'];
     protected $dates = ['paid_at'];
 
+    protected $casts = [
+        'paid_at' => 'datetime',
+        'amount' => 'decimal:2', // Example cast, adjust if needed
+    ];
+
     use HasFactory;
 
     public function cycle(): BelongsTo

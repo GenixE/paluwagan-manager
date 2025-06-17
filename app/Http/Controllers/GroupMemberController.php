@@ -9,6 +9,7 @@ use App\Models\GroupMember;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\RedirectResponse; // Add this
 
 // Import ValidationException
 
@@ -20,6 +21,30 @@ class GroupMemberController extends Controller
         return response()->json($members);
     }
 
+    public function update(Request $request, $groupId, $memberId): RedirectResponse
+    {
+        $member = GroupMember::where('group_id', $groupId)->findOrFail($memberId);
+
+        $data = $request->validate([
+            'position' => 'required|integer|min:1',
+        ]);
+
+        // Check if position is already taken by another member in the same group
+        $existingPosition = GroupMember::where('group_id', $groupId)
+            ->where('position', $data['position'])
+            ->where('member_id', '!=', $memberId) // Exclude the current member
+            ->first();
+
+        if ($existingPosition) {
+            throw ValidationException::withMessages([
+                'position' => ['This position is already taken by another member in this group.'],
+            ]);
+        }
+
+        $member->update($data);
+
+        return redirect()->back()->with('success', 'Member position updated successfully.');
+    }
     public function store(Request $request, $groupId)
     {
         $group = Group::withCount('members')->findOrFail($groupId); // Fetch group and count members

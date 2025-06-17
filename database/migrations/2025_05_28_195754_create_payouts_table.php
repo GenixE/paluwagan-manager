@@ -26,35 +26,35 @@ return new class extends Migration
         });
 
         // Trigger: update group status when final payout completes
-        DB::unprepared(<<<SQL
-CREATE TRIGGER `trg_after_payout_update`
-AFTER UPDATE ON `payouts`
-FOR EACH ROW
-BEGIN
-    DECLARE gid INT;
-    DECLARE completed_count INT;
-    DECLARE maxc INT;
-
-    IF NEW.status = 'completed' THEN
-        SELECT c.group_id INTO gid FROM cycles c WHERE c.cycle_id = NEW.cycle_id;
-
-        SELECT COUNT(*) INTO completed_count
-          FROM payouts p
-          JOIN cycles c2 ON p.cycle_id = c2.cycle_id
-         WHERE c2.group_id = gid
-           AND p.status = 'completed';
-
-        SELECT g.max_cycles INTO maxc FROM `groups` g WHERE g.group_id = gid;
-
-        IF completed_count >= maxc THEN
-            UPDATE `groups`
-               SET status = 'finished', status_changed_at = NOW()
-             WHERE group_id = gid AND status = 'active';
-        END IF;
-    END IF;
-END;
-SQL
-        );
+//        DB::unprepared(<<<SQL
+//CREATE TRIGGER `trg_after_payout_update`
+//AFTER UPDATE ON `payouts`
+//FOR EACH ROW
+//BEGIN
+//    DECLARE gid INT;
+//    DECLARE completed_count INT;
+//    DECLARE maxc INT;
+//
+//    IF NEW.status = 'completed' THEN
+//        SELECT c.group_id INTO gid FROM cycles c WHERE c.cycle_id = NEW.cycle_id;
+//
+//        SELECT COUNT(*) INTO completed_count
+//          FROM payouts p
+//          JOIN cycles c2 ON p.cycle_id = c2.cycle_id
+//         WHERE c2.group_id = gid
+//           AND p.status = 'completed';
+//
+//        SELECT g.max_cycles INTO maxc FROM `groups` g WHERE g.group_id = gid;
+//
+//        IF completed_count >= maxc THEN
+//            UPDATE `groups`
+//               SET status = 'finished', status_changed_at = NOW()
+//             WHERE group_id = gid AND status = 'active';
+//        END IF;
+//    END IF;
+//END;
+//SQL
+//        );
     }
 
     /**

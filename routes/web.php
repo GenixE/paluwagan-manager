@@ -41,25 +41,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [GroupController::class, 'store'])->name('store');
         Route::get('{group}', [GroupController::class, 'show'])->name('show');
         Route::put('{group}', [GroupController::class, 'update'])->name('update');
-        Route::delete('{group}', [GroupController::class, 'destroy'])->name('destroy'); // Added destroy route
+        Route::delete('{group}', [GroupController::class, 'destroy'])->name('destroy');
 
         Route::get('{group}/members', [GroupMemberController::class, 'index'])->name('members.index');
         Route::post('{group}/members', [GroupMemberController::class, 'store'])->name('members.store');
         Route::delete('{group}/members/{member}', [GroupMemberController::class, 'destroy'])->name('members.destroy');
+        Route::put('{group}/members/{member}', [GroupMemberController::class, 'update'])->name('members.update');
 
-        Route::prefix('{group}/cycles')->name('cycles.')->group(function () {
-            Route::get('/', [CycleController::class, 'index'])->name('index');
+        Route::prefix('{group}/cycles')->name('cycles.')->group(function () { // Removed {cycle} from this prefix for store/index of cycles
             Route::post('/', [CycleController::class, 'store'])->name('store');
-            Route::get('{cycle}', [CycleController::class, 'show'])->name('show');
-            Route::put('{cycle}', [CycleController::class, 'update'])->name('update');
-            Route::delete('{cycle}', [CycleController::class, 'destroy'])->name('destroy');
+            Route::get('/', [CycleController::class, 'indexForGroup'])->name('index'); // Assuming indexForGroup lists cycles for a group
 
-            Route::get('{cycle}/contributions', [ContributionController::class, 'index'])->name('contributions.index');
-            Route::patch('{cycle}/contributions/{contribution}', [ContributionController::class, 'updateStatus'])->name('contributions.update');
+            Route::prefix('{cycle}')->group(function () { // New prefix for specific cycle operations
+                Route::get('/', [CycleController::class, 'show'])->name('show');
+                Route::put('/', [CycleController::class, 'update'])->name('update');
+                Route::delete('/', [CycleController::class, 'destroy'])->name('destroy');
 
-            Route::get('{cycle}/payouts', [PayoutController::class, 'index'])->name('payouts.index');
-            Route::post('{cycle}/payouts', [PayoutController::class, 'store'])->name('payouts.store');
-            Route::patch('{cycle}/payouts/{payout}', [PayoutController::class, 'updateStatus'])->name('payouts.update');
+                // Contribution routes within a specific cycle
+                Route::get('contributions', [ContributionController::class, 'indexForCycle'])->name('contributions.index');
+                Route::post('contributions', [ContributionController::class, 'store'])->name('contributions.store');
+                Route::patch('contributions/{contribution}', [ContributionController::class, 'update'])->name('contributions.update');
+                Route::delete('contributions/{contribution}', [ContributionController::class, 'destroy'])->name('contributions.destroy');
+
+                // Payout routes within a specific cycle
+                Route::get('payouts', [PayoutController::class, 'indexForCycle'])->name('payouts.index');
+                Route::post('payouts', [PayoutController::class, 'store'])->name('payouts.store');
+                Route::patch('payouts/{payout}', [PayoutController::class, 'update'])->name('payouts.update'); // Changed updateStatus to update
+                Route::delete('payouts/{payout}', [PayoutController::class, 'destroy'])->name('payouts.destroy'); // Added delete route
+            });
         });
     });
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -67,16 +68,24 @@ class GroupController extends Controller
             }
         }
 
+        $allClients = Client::orderBy('first_name')->orderBy('last_name')->get()->map(fn($client) => [
+            'client_id' => $client->client_id,
+            'first_name' => $client->first_name,
+            'last_name' => $client->last_name,
+            // Add any other fields needed for display in combobox if necessary
+        ]);
+
         $groupData = [
             'group_id' => $group->group_id,
             'name' => $group->name,
             'description' => $group->description,
-            'current_cycle' => $latestCycleNumber, // Use the dynamically determined latest cycle number
+            'current_cycle' => $group->current_cycle, // Use the model's actual current_cycle value
             'status' => $group->status,
             'created_at' => $group->created_at ? Carbon::parse($group->created_at)->toDateTimeString() : null,
             'status_changed_at' => $group->status_changed_at ? Carbon::parse($group->status_changed_at)->toDateTimeString() : null,
-            'members' => $group->members->map(function ($member) {
+            'members' => $group->members->map(function ($member) { // $member is an instance of GroupMember model
                 return [
+                    'group_member_id' => $member->getKey(),
                     'client' => [
                         'client_id' => $member->client->client_id,
                         'first_name' => $member->client->first_name,
@@ -86,7 +95,7 @@ class GroupController extends Controller
                     ],
                     'pivot' => [
                         'joined_at' => $member->joined_at ? Carbon::parse($member->joined_at)->toDateTimeString() : null,
-                        'position' => $member->position, // Added position attribute
+                        'position' => $member->position,
                     ]
                 ];
             }),
@@ -94,6 +103,7 @@ class GroupController extends Controller
                 $contributions = $cycle->contributions->map(function ($contribution) {
                     return [
                         'contribution_id' => $contribution->contribution_id,
+                        'group_member_id' => $contribution->group_member_id, // Ensure this is passed
                         'member_name' => $contribution->member && $contribution->member->client ? $contribution->member->client->first_name . ' ' . $contribution->member->client->last_name : 'N/A',
                         'amount' => $contribution->amount,
                         'status' => $contribution->status,
@@ -115,6 +125,7 @@ class GroupController extends Controller
                     'payouts' => $cycle->payouts->map(function ($payout) {
                         return [
                             'payout_id' => $payout->payout_id,
+                            'member_id' => $payout->member_id, // Add this line
                             'member_name' => $payout->member && $payout->member->client ? $payout->member->client->first_name . ' ' . $payout->member->client->last_name : 'N/A',
                             'amount' => $payout->amount,
                             'status' => $payout->status,
@@ -127,6 +138,7 @@ class GroupController extends Controller
 
         return Inertia::render('group-details', [
             'group' => $groupData,
+            'allClients' => $allClients, // Add this line
         ]);
     }
 
